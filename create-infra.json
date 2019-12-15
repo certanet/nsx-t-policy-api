@@ -1,0 +1,373 @@
+{
+  "resource_type": "Infra",
+  "children": [
+    {
+      "resource_type": "ChildTier1",
+      "marked_for_delete": false,
+      "Tier1": {
+        "resource_type": "Tier1",
+        "id": "NSXT25-T1",
+        "description": "NSXT25-T1",
+        "display_name": "NSXT25-T1",
+        "failover_mode": "NON_PREEMPTIVE",
+        "tier0_path": "/infra/tier-0s/NSXT25-T0",
+        "route_advertisement_types": [
+          "TIER1_LB_VIP",
+          "TIER1_CONNECTED",
+          "TIER1_STATIC_ROUTES"
+        ],
+        "children": [
+          {
+            "resource_type": "ChildLocaleServices",
+            "LocaleServices": {
+              "resource_type": "LocaleServices",
+              "id": "default",
+              "edge_cluster_path": "/infra/sites/default/enforcement-points/default/edge-clusters/{{CLUSTER_ID}}"
+            }
+          },
+          {
+            "resource_type": "ChildSegment",
+            "Segment": {
+              "resource_type": "Segment",
+              "id": "NSXT25-SEG-WEB",
+              "description": "NSXT25-SEG-WEB",
+              "display_name": "NSXT25-SEG-WEB",
+              "transport_zone_path": "/infra/sites/default/enforcement-points/default/transport-zones/{{TRANSPORTZONE_ID}}",
+              "subnets": [
+                {
+                  "gateway_address": "10.250.80.254/24"
+                }
+              ]
+            }
+          },
+          {
+            "resource_type": "ChildSegment",
+            "Segment": {
+              "resource_type": "Segment",
+              "id": "NSXT25-SEG-APP",
+              "description": "NSXT25-SEG-APP",
+              "display_name": "NSXT25-SEG-APP",
+              "transport_zone_path": "/infra/sites/default/enforcement-points/default/transport-zones/{{TRANSPORTZONE_ID}}",
+              "subnets": [
+                {
+                  "gateway_address": "10.250.70.254/24"
+                }
+              ]
+            }
+          },
+          {
+            "resource_type": "ChildSegment",
+            "Segment": {
+              "resource_type": "Segment",
+              "id": "NSXT25-SEG-DB",
+              "description": "NSXT25-SEG-DB",
+              "display_name": "NSXT25-SEG-DB",
+              "transport_zone_path": "/infra/sites/default/enforcement-points/default/transport-zones/{{TRANSPORTZONE_ID}}",
+              "subnets": [
+                {
+                  "gateway_address": "10.250.60.254/24"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource_type": "ChildDomain",
+      "marked_for_delete": false,
+      "Domain": {
+        "id": "default",
+        "resource_type": "Domain",
+        "description": "default",
+        "display_name": "default",
+        "marked_for_delete": false,
+        "children": [
+          {
+            "resource_type": "ChildGroup",
+            "Group": {
+              "resource_type": "Group",
+              "marked_for_delete": false,
+              "description": "NSXT25-GRP-WEB",
+              "display_name": "NSXT25-GRP-WEB",
+              "id": "NSXT25-GRP-WEB",
+              "expression": [
+                {
+                  "member_type": "VirtualMachine",
+                  "value": "NSXT25-WEB",
+                  "key": "Tag",
+                  "operator": "EQUALS",
+                  "resource_type": "Condition"
+                }
+              ]
+            }
+          },
+          {
+            "resource_type": "ChildGroup",
+            "Group": {
+              "resource_type": "Group",
+              "marked_for_delete": false,
+              "description": "NSXT25-GRP-APP",
+              "display_name": "NSXT25-GRP-APP",
+              "id": "NSXT25-GRP-APP",
+              "expression": [
+                {
+                  "member_type": "VirtualMachine",
+                  "value": "NSXT25-APP",
+                  "key": "Tag",
+                  "operator": "EQUALS",
+                  "resource_type": "Condition"
+                }
+              ]
+            }
+          },
+          {
+            "resource_type": "ChildGroup",
+            "Group": {
+              "resource_type": "Group",
+              "description": "NSXT25-GRP-DB",
+              "display_name": "NSXT25-GRP-DB",
+              "id": "NSXT25-GRP-DB",
+              "expression": [
+                {
+                  "member_type": "VirtualMachine",
+                  "value": "NSXT25-DB",
+                  "key": "Tag",
+                  "operator": "EQUALS",
+                  "resource_type": "Condition"
+                }
+              ]
+            }
+          },
+          {
+            "resource_type": "ChildSecurityPolicy",
+            "marked_for_delete": false,
+            "SecurityPolicy": {
+              "id": "NSXT25-POLICY-INTRA-APP",
+              "resource_type": "SecurityPolicy",
+              "description": "Allow intra-app traffic",
+              "display_name": "NSXT25-POLICY-INTRA-APP",
+              "rules": [
+                {
+                  "resource_type": "Rule",
+                  "description": "Allow Web to App",
+                  "display_name": "NSXT25-WEB-8000-to-APP",
+                  "sequence_number": 2,
+                  "source_groups": [
+                    "/infra/domains/default/groups/NSXT25-GRP-WEB"
+                  ],
+                  "destination_groups": [
+                    "/infra/domains/default/groups/NSXT25-GRP-APP"
+                  ],
+                  "services": [
+                    "/infra/services/SAP_ICM_HTTP"
+                  ],
+                  "action": "ALLOW"
+                },
+                {
+                  "resource_type": "Rule",
+                  "description": "Allow App to Database",
+                  "display_name": "NSXT25-APP-Postgres-to-DB",
+                  "sequence_number": 2,
+                  "source_groups": [
+                    "/infra/domains/default/groups/NSXT25-GRP-APP"
+                  ],
+                  "destination_groups": [
+                    "/infra/domains/default/groups/NSXT25-GRP-DB"
+                  ],
+                  "services": [
+                    "/infra/services/PostgreSQL"
+                  ],
+                  "action": "ALLOW"
+                }
+              ]
+            }
+          },
+          {
+            "resource_type": "ChildGatewayPolicy",
+            "marked_for_delete": false,
+            "GatewayPolicy": {
+              "resource_type": "GatewayPolicy",
+              "id": "NSXT25-Section",
+              "display_name": "NSXT25-Section",
+              "parent_path": "/infra/domains/default",
+              "marked_for_delete": false,
+              "rules": [
+                {
+                  "source_groups": [
+                    "ANY"
+                  ],
+                  "destination_groups": [
+                    "/infra/domains/default/groups/NSXT25-GRP-WEB"
+                  ],
+                  "services": [
+                    "/infra/services/HTTP"
+                  ],
+                  "profiles": [
+                    "ANY"
+                  ],
+                  "action": "ALLOW",
+                  "logged": false,
+                  "scope": [
+                    "/infra/tier-1s/NSXT25-T1"
+                  ],
+                  "disabled": false,
+                  "notes": "",
+                  "direction": "IN_OUT",
+                  "tag": "",
+                  "ip_protocol": "IPV4_IPV6",
+                  "resource_type": "Rule",
+                  "id": "Any-to-WEB",
+                  "display_name": "Any-to-WEB"
+                },
+                {
+                  "source_groups": [
+                    "ANY"
+                  ],
+                  "destination_groups": [
+                    "/infra/domains/default/groups/NSXT25-GRP-WEB",
+                    "/infra/domains/default/groups/NSXT25-GRP-APP",
+                    "/infra/domains/default/groups/NSXT25-GRP-DB"
+                  ],
+                  "services": [
+                    "ANY"
+                  ],
+                  "profiles": [
+                    "ANY"
+                  ],
+                  "action": "DROP",
+                  "logged": false,
+                  "scope": [
+                    "/infra/tier-1s/NSXT25-T1"
+                  ],
+                  "disabled": false,
+                  "notes": "",
+                  "direction": "IN_OUT",
+                  "tag": "",
+                  "ip_protocol": "IPV4_IPV6",
+                  "resource_type": "Rule",
+                  "id": "DropAny",
+                  "display_name": "DropAny"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "resource_type": "ChildLBClientSslProfile",
+      "marked_for_delete": false,
+      "LBClientSslProfile": {
+        "resource_type": "LBClientSslProfile",
+        "id": "NSXT25-SSL",
+        "cipher_group_label": "CUSTOM",
+        "session_cache_enabled": true,
+        "ciphers": [
+          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        ],
+        "protocols": [
+          "TLS_V1_2"
+        ]
+      }
+    },
+    {
+      "resource_type": "ChildLBAppProfile",
+      "marked_for_delete": false,
+      "LBAppProfile": {
+        "resource_type": "LBHttpProfile",
+        "id": "NSXT25-HTTP-PROFILE",
+        "x_forwarded_for": "INSERT"
+      }
+    },
+    {
+      "resource_type": "ChildLBMonitorProfile",
+      "marked_for_delete": false,
+      "LBMonitorProfile": {
+        "resource_type": "LBHttpMonitorProfile",
+        "marked_for_delete": false,
+        "id": "NSXT25-MON-HTTP",
+        "monitor_port": 80,
+        "timeout": 5,
+        "response_status_codes": [
+          200,
+          300
+        ]
+      }
+    },
+    {
+      "resource_type": "ChildLBService",
+      "marked_for_delete": false,
+      "LBService": {
+        "resource_type": "LBService",
+        "id": "NSXT25-LB",
+        "connectivity_path": "/infra/tier-1s/NSXT25-T1",
+        "error_log_level": "DEBUG",
+        "access_log_enabled": true
+      }
+    },
+    {
+      "resource_type": "ChildLBVirtualServer",
+      "marked_for_delete": false,
+      "LBVirtualServer": {
+        "resource_type": "LBVirtualServer",
+        "id": "NSXT25-VIP-WEB",
+        "lb_service_path": "/infra/lb-services/NSXT25-LB",
+        "ip_address": "10.250.80.100",
+        "ports": [
+          "443"
+        ],
+        "pool_path": "/infra/lb-pools/NSXT25-POOL-WEB",
+        "application_profile_path": "/infra/lb-app-profiles/NSXT25-HTTP-PROFILE",
+        "client_ssl_profile_binding": {
+          "ssl_profile_path": "/infra/lb-client-ssl-profiles/NSXT25-SSL",
+          "default_certificate_path": "/infra/certificates/NSXT25-TLS-netwatch.local",
+          "client_auth": "IGNORE",
+          "certificate_chain_depth": 2
+        }
+      }
+    },
+    {
+      "resource_type": "ChildLBPool",
+      "marked_for_delete": false,
+      "LBPool": {
+        "id": "NSXT25-POOL-WEB",
+        "resource_type": "LBPool",
+        "marked_for_delete": false,
+        "active_monitor_paths": [
+          "/infra/lb-monitor-profiles/NSXT25-MON-HTTP"
+        ],
+        "algorithm": "ROUND_ROBIN",
+        "member_group": {
+          "group_path": "/infra/domains/default/groups/NSXT25-GRP-WEB",
+          "ip_revision_filter": "IPV4"
+        },
+        "snat_translation": {
+          "type": "LBSnatDisabled"
+        }
+      }
+    },
+    {
+      "resource_type": "ChildTlsTrustData",
+      "marked_for_delete": false,
+      "TlsTrustData": {
+        "resource_type": "TlsTrustData",
+        "marked_for_delete": false,
+        "id": "NSXT25-TLS-ca.local",
+        "pem_encoded": "{{CA_CERT}}"
+      }
+    },
+    {
+      "resource_type": "ChildTlsTrustData",
+      "marked_for_delete": false,
+      "TlsTrustData": {
+        "resource_type": "TlsTrustData",
+        "marked_for_delete": false,
+        "id": "NSXT25-TLS-netwatch.local",
+        "pem_encoded": "{{CERT+PRIVKEY}}",
+        "key_algo": "RSA"
+      }
+    }
+  ]
+}
